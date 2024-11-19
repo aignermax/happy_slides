@@ -10,7 +10,7 @@ import io
 # It creates a PowerPoint presentation where each image is placed on a separate slide.
 # Images are correctly oriented based on their EXIF data and are inserted in the order of their folders and filenames.
 
-# Path to the main folder containing subdirectories with images
+# Path to the main folder containing images
 main_folder = r"."
 
 # Set the working directory
@@ -44,6 +44,44 @@ def fix_image_orientation(image_path):
         print(f"Error processing {image_path}: {e}")
         return None
 
+# Function to add an image with black borders if necessary
+def add_image_with_black_borders(slide, image):
+    # Convert slide dimensions from EMUs to pixels
+    dpi = 96  # Typical DPI for PowerPoint slides
+    slide_width_px = int(presentation.slide_width / 914400 * dpi)
+    slide_height_px = int(presentation.slide_height / 914400 * dpi)
+
+    # Calculate scaling factors for width and height
+    scale_w = slide_width_px / image.width
+    scale_h = slide_height_px / image.height
+
+    # Use the smaller scaling factor to maintain the image's aspect ratio
+    scale = min(scale_w, scale_h)
+
+    # New image dimensions after scaling
+    new_width = int(image.width * scale)
+    new_height = int(image.height * scale)
+
+    # Create a black background image with slide dimensions in pixels
+    black_background = Image.new("RGB", (slide_width_px, slide_height_px), "black")
+
+    # Resize the image to fit within the slide
+    resized_image = image.resize((new_width, new_height), Image.ANTIALIAS)
+
+    # Paste the resized image onto the black background, centered
+    left = (slide_width_px - new_width) // 2
+    top = (slide_height_px - new_height) // 2
+    black_background.paste(resized_image, (left, top))
+
+    # Save the result to an in-memory byte stream
+    image_stream = io.BytesIO()
+    black_background.save(image_stream, format="JPEG")
+    image_stream.seek(0)
+
+    # Add the black background with the image to the slide
+    slide.shapes.add_picture(image_stream, Inches(0), Inches(0), width=presentation.slide_width, height=presentation.slide_height)
+
+
 # Function to collect and sort images from a folder (including subfolders)
 def get_images_sorted(folder):
     images = []
@@ -51,50 +89,30 @@ def get_images_sorted(folder):
         for file in files:
             if file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif')):
                 images.append(os.path.join(root, file))
-    # Sort images in the current folder
+    # Sort images alphabetically
     return natsorted(images)
 
-# Sort main folders alphabetically
-main_folders = [os.path.join(main_folder, d) for d in os.listdir(main_folder) if os.path.isdir(os.path.join(main_folder, d))]
-main_folders = natsorted(main_folders)
+# Collect all images (including top-level folder and subfolders)
+all_images = get_images_sorted(main_folder)
 
-# Process images from each main folder in the correct order
-total_images = 0
-for folder in main_folders:
-    images = get_images_sorted(folder)
-    total_images += len(images)
-
+# Process images in sorted order
+total_images = len(all_images)
 processed_images = 0
-for folder in main_folders:
-    print(f"Processing folder: {folder}")
-    images = get_images_sorted(folder)
-    for image_path in images:
-        # Load image with correct orientation
-        fixed_image = fix_image_orientation(image_path)
-        if fixed_image is None:
-            continue
-        
-        # Save image to an in-memory byte stream
-        image_stream = io.BytesIO()
-        fixed_image.save(image_stream, format='JPEG')
-        image_stream.seek(0)  # Reset stream position to the beginning
 
-        # Add a new slide for the image
-        slide = presentation.slides.add_slide(presentation.slide_layouts[5])  # Blank slide
-        slide_width = presentation.slide_width
-        slide_height = presentation.slide_height
+for image_path in all_images:
+    # Load the image with the correct orientation
+    fixed_image = fix_image_orientation(image_path)
+    if fixed_image is None:
+        continue
 
-        # Add image and adjust size proportionally
-        try:
-            picture = slide.shapes.add_picture(image_stream, Inches(0), Inches(0), width=slide_width)
-            picture.left = (slide_width - picture.width) // 2
-            picture.top = (slide_height - picture.height) // 2
-        except Exception as e:
-            print(f"Error adding image: {image_path}. Error: {e}")
-            continue
+    # Add a new blank slide
+    slide = presentation.slides.add_slide(presentation.slide_layouts[5])  # Blank slide layout
 
-        processed_images += 1
-        print(f"Processed {processed_images}/{total_images} images: {image_path}")
+    # Add the image with black borders to the slide
+    add_image_with_black_borders(slide, fixed_image)
+
+    processed_images += 1
+    print(f"Processed {processed_images}/{total_images} images: {image_path}")
 
 # Save the presentation
 output_file = "Photos_Presentation.pptx"
