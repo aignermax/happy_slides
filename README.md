@@ -1,6 +1,6 @@
-Have you ever wanted to create a ppt for your Kindergarden with hundreds of photos? Well now you can. Simply use HappySlides!
+Have you ever wanted to create a ppt for your Kindergarden with hundreds of photos? Well now you can. Simply use happy_slides!
 
-# HappySlides
+# happy_slides
 
 A Python script that scans directories for images, corrects their orientation based on EXIF data, and compiles them into a PowerPoint presentation with automatic slide transitions.
 
