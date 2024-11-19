@@ -1,6 +1,9 @@
+Have you ever wanted to create a ppt for your Kindergarden with hundreds of photos? Well now you can. Simply use HappySlides!
+
 # Image to PPTX
 
 A Python script that scans directories for images, corrects their orientation based on EXIF data, and compiles them into a PowerPoint presentation with automatic slide transitions.
+![image](https://github.com/user-attachments/assets/86060025-e13f-41b7-ad83-81a20e0b8af9)
 
 ## Features
 
