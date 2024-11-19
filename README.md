@@ -3,6 +3,7 @@ Have you ever wanted to create a ppt for your Kindergarden with hundreds of phot
 # HappySlides
 
 A Python script that scans directories for images, corrects their orientation based on EXIF data, and compiles them into a PowerPoint presentation with automatic slide transitions.
+
 ![HappySlides Logo](https://github.com/user-attachments/assets/3a480b87-5656-407c-8bfb-fae1b6fa5503)
 
 ## Features
